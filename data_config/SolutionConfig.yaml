@@ -6,6 +6,7 @@ general_configs :
   tracking_env: dev
   tracking_url: mlcoredevv2sql21test.azurewebsites.net
 
+
 data_engineering_ft:
   datalake_configs:
     input_tables :
