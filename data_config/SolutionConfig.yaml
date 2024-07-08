@@ -1,0 +1,254 @@
+general_configs : 
+  sdk_session_id: 
+    dev: 10ca7886d68e49cbb2d9307e9d2d939a
+    uat: 16ba37d0994549a7a3fb1df72563e37c
+    prod: 64ec92d6117247877965d152
+  tracking_env: dev
+  tracking_url: mlcoredevv2sql21test.azurewebsites.net
+
+data_engineering_ft:
+  datalake_configs:
+    input_tables :
+      source_1 : 
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_2
+        table : raw_anemia_c_uc_feature_2
+        primary_keys: index
+    output_tables :
+      output_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_feature_uc_0207_v1
+        primary_keys: index
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled : true
+  batch_size : 5000
+  cron_job_schedule: 0 */30 * ? * *
+
+data_engineering_gt:
+  datalake_configs:
+    input_tables :
+      source_1 : 
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_2
+        table : raw_anemia_c_uc_gt_2
+        primary_keys: index
+    output_tables :
+      output_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_gt_uc_0207_v1
+        primary_keys: index
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled : true
+  batch_size : 5000
+  cron_job_schedule: 0 */30 * ? * *
+
+feature_pipelines_ft:
+  datalake_configs:
+    input_tables :
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_feature_uc_0207_v1
+        primary_keys: index
+    output_tables :
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: transformed_anemia_c_uc_feature_uc_0207_v1
+          primary_keys: index
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled: false
+
+feature_pipelines_gt:
+  datalake_configs:
+    input_tables : 
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_gt_uc_0207_v1
+        primary_keys: index
+    output_tables : 
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: transformed_anemia_c_uc_gt_uc_0207_v1
+          primary_keys: index  
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled: false
+
+train:
+  datalake_configs:
+    input_tables : 
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: transformed_anemia_c_uc_feature_uc_0207_v1
+        primary_keys: index
+      input_2 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: transformed_anemia_c_uc_gt_uc_0207_v1
+        primary_keys: index
+    output_tables : 
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: trainoutput_anemia_c_uc_0207_v1
+          primary_keys: index
+  model_configs :
+    registry_platform: databricks
+    model_registry : mlflow
+    unity_catalog : "yes"
+    model_registry_params :
+      catalog_name: mlcore_dev
+      schema_name: anemia_c_uc_uc_db_0207_v1
+    model_params:      
+      model_name: anemia_c_az_mlflow_0207_v1
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  test_size : 0.2
+  feature_columns:
+    - WBC
+    - LYMp
+    - NEUTp
+    - LYMn
+    - NEUTn
+    - RBC
+    - HGB
+    - HCT
+    - MCV
+    - MCH
+    - MCHC
+    - PLT
+    - PDW
+    - PCT
+    - mean_WBC_RBC
+    - std_WBC_RBC
+    - id
+  date_column: 'date_time'
+  target_columns:
+    - Diagnosis
+  horizon: 7
+  frequency: 'D'
+  is_scheduled: false
+
+data_prep_deployment_ft:
+  datalake_configs:
+    input_tables :
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_feature_uc_0207_v1
+        primary_keys: index
+    output_tables :
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: dpd_anemia_c_uc_feature_uc_0207_v1
+          primary_keys: index  
+        output_2 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: dpd_feature_table_task_log_anemia_c_uc_0207_v1
+          primary_keys: index
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled: true
+  batch_size: 5000
+  cron_job_schedule: 0 */30 * ? * *
+
+data_prep_deployment_gt:
+  datalake_configs:
+    input_tables : 
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: anemia_c_uc_gt_uc_0207_v1
+        primary_keys: index
+    output_tables : 
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: dpd_anemia_c_uc_gt_uc_0207_v1
+          primary_keys: index  
+        output_2 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: dpd_ground_truth_table_task_log_anemia_c_uc_0207_v1
+          primary_keys: index
+  storage_configs :
+    cloud_provider : databricks_uc
+    params:
+      metastore : null
+      catalog_name : mlcore_dev
+      schema_name : mlcore
+      volume_name : mlcore_volume
+  is_scheduled: true
+  batch_size: 5000
+  cron_job_schedule: 0 */30 * ? * *
+
+inference:
+  datalake_configs:
+    input_tables : 
+      input_1 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: dpd_anemia_c_uc_feature_uc_0207_v1
+        primary_keys: index
+      input_2 :
+        catalog_name : mlcore_dev
+        schema : anemia_c_uc_uc_db_0207_v1
+        table: dpd_anemia_c_uc_gt_uc_0207_v1
+        primary_keys: index
+    output_tables : 
+        output_1 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: inference_anemia_c_0207_v1
+          primary_keys: index
+        output_2 :
+          catalog_name : mlcore_dev
+          schema : anemia_c_uc_uc_db_0207_v1
+          table: inference_task_log_anemia_c_uc_2806
+          primary_keys: index
+  model_configs :
+    use_latest_version: true
+  is_scheduled: true
+  batch_size: 5000
+  cron_job_schedule: 0 */30 * ? * *

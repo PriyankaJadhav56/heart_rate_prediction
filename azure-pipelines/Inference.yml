@@ -1,0 +1,106 @@
+trigger:
+  branches:
+    include:
+      - none
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: repo_parent_folder
+    type: string
+    default: MLOpsFlow
+  - name: sdk_session_id
+    type: string
+    default: None
+  - name: pipeline_type
+    type: string
+    default: azdevops
+  - name: user_group_name
+    type: string
+    default: MLCore_Services
+
+
+variables:
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/UAT')}}:
+    - group: SDK-UAT
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/PROD')}}:
+    - group: SDK-PROD
+  - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/QA')}}:
+    - group: SDK-QA
+  - ${{ if not(or(eq(variables['Build.SourceBranch'], 'refs/heads/QA'), eq(variables['Build.SourceBranch'], 'refs/heads/UAT'), eq(variables['Build.SourceBranch'], 'refs/heads/PROD'))) }}:
+    - group: SDK-DEV
+
+stages:
+  - stage: PublishToDBFS
+    displayName: publish notebooks
+    jobs:
+      - job: Publish
+        steps:
+          - script: |
+              python azure-pipelines/utils/get_databricks_access_token.py $(AZ_CLIENT_ID) $(AZ_CLIENT_SECRET) $(AZ_TENANT) > output.txt
+            displayName: 'Run extract_value.py script with parameters'
+
+          - script: |
+              extracted_token=$(cat output.txt)
+              echo "##vso[task.setvariable variable=DATABRICKS_TOKEN]$extracted_token"
+            displayName: 'Set pipeline variable from script output'
+            
+          - bash: pip install requests && pip install python-dotenv && pip install databricks-cli
+            displayName: installing requests, python-dotenv and databricks-cli
+
+          - script: |
+              SUBSTRING=$(echo $(Build.Repository.Name)| cut -d'/' -f 2)
+              echo $SUBSTRING
+              echo "##vso[task.setvariable variable=projectName]$SUBSTRING"
+            displayName: 'project name'
+
+          - script: |
+              if [[ $(DEPLOY_ENV) == "qa" ]]; then
+                sed -i 's|${NOTEBOOK_PATH}|/Repos/${{ parameters.repo_parent_folder }}_QA/$(projectName)/notebooks/Inference|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              else
+                sed -i 's|${NOTEBOOK_PATH}|/Repos/${{ parameters.repo_parent_folder }}/$(projectName)/notebooks/Inference|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              fi
+              sed -i 's|${ENV_VARIABLE}|$(DEPLOY_ENV)|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${PIPELINE_ID}|$(System.DefinitionId)|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${BUILD_ID}|$(Build.BuildId)|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${PIPELINE_NAME}|$(Build.DefinitionName)|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${PIPELINE_TYPE}|${{ parameters.pipeline_type }}|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${SDK_SESSION_ID}|${{ parameters.sdk_session_id }}|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${CLUSTER_ID}|$(CLUSTER_ID)|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              sed -i 's|${GROUP_NAME}|${{ parameters.user_group_name }}|g' "$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml"
+              python -c "import json, yaml; print(json.dumps(yaml.load(open('$(Build.SourcesDirectory)/azure-pipelines/pipeline_configs/inference_config.yaml'), Loader=yaml.FullLoader)))" > inference_config.json
+            displayName: 'Update configs with Variables'
+
+          - script: |
+              python azure-pipelines/utils/yaml_to_string.py "inference_config.json"
+            displayName: 'push solution_config'
+
+          - script: |
+              if [[ $(DEPLOY_ENV) == "qa" ]]; then
+                databricks repos update --path /Repos/${{ parameters.repo_parent_folder }}_QA/$(projectName) --branch $(BRANCH)
+              else
+                databricks repos update --path /Repos/${{ parameters.repo_parent_folder }}/$(projectName) --branch $(BRANCH)
+              fi
+              job_id=$(databricks jobs create --json-file inference_config.json --version 2.1 | jq -r '.job_id')
+              run_id=$(databricks jobs run-now --job-id "$job_id" --version 2.1 | jq -r '.run_id')
+              start_time=$(databricks runs get --run-id $run_id --version 2.1 | jq -r '.start_time')
+              echo "##vso[task.setvariable variable=databricksJobId]$job_id"
+              echo "##vso[task.setvariable variable=databricksRunId]$run_id"
+              echo "##vso[task.setvariable variable=databricksStart_time]$start_time"
+              echo "run_id : $run_id"
+              echo "job_id : $job_id"
+              echo "start_time : $start_time"
+            displayName: 'Create Databricks Job For Inference'
+            env:
+              databricksAccessToken: $(DATABRICKS_TOKEN)
+
+          - task: PythonScript@0
+            displayName: 'Devops_Observability'
+            inputs:
+              scriptSource:  filePath
+              scriptPath: azure-pipelines/utils/devops_observability.py
+              arguments: $(API_BASE_URL) $(AZ_CLIENT_ID) $(AZ_CLIENT_SECRET) $(AZ_TENANT) $(DEPLOY_ENV) $(Build.Repository.Uri) $(Build.SourceVersion) "$(Build.RequestedFor)" "Inference" $(Build.DefinitionName) $(System.DefinitionId) $(Build.BuildId) $(Build.SourceBranch) $(System.TeamProject) $(System.CollectionUri) ${{ parameters.repo_parent_folder }} $(databricksRunId) $(databricksJobId) $(DATABRICKS_HOST) $(databricksStart_time) $(AZURE_DEVOPS_PAT) ${{ parameters.sdk_session_id }}
+              

@@ -1,0 +1,59 @@
+name: Feature_Engineering
+max_concurrent_runs: 1
+max_retries: 0
+tasks:
+  - task_key: Feature_Pipeline_FT
+    existing_cluster_id: "${CLUSTER_ID}"
+    notebook_task:
+      notebook_path: "${FEATURE_PIPELINE_PATH_FT}"
+      base_parameters:
+        env: "${ENV_VARIABLE}"
+        sdk_session_id: "${SDK_SESSION_ID}"
+        task: "FE"
+        pipeline_id: "${PIPELINE_ID}"
+        build_id: "${BUILD_ID}"
+        pipeline_name: "${PIPELINE_NAME}"
+        pipeline_type: "${PIPELINE_TYPE}"
+        solution_config : "SOLUTION_CONFIG_YAML"
+
+  - task_key: Feature_Pipeline_GT
+    existing_cluster_id: "${CLUSTER_ID}"
+    notebook_task:
+      notebook_path: "${FEATURE_PIPELINE_PATH_GT}"
+      base_parameters:
+        env: "${ENV_VARIABLE}"
+        sdk_session_id: "${SDK_SESSION_ID}"
+        task: "FE"
+        pipeline_id: "${PIPELINE_ID}"
+        build_id: "${BUILD_ID}"
+        pipeline_name: "${PIPELINE_NAME}"
+        pipeline_type: "${PIPELINE_TYPE}"
+        solution_config : "SOLUTION_CONFIG_YAML"
+
+  - depends_on:
+      - task_key: Feature_Pipeline_GT
+      - task_key: Feature_Pipeline_FT
+    task_key: Train
+    existing_cluster_id: "${CLUSTER_ID}"
+    notebook_task:
+      notebook_path: "${TRAIN_PATH}"
+      base_parameters:
+        env: "${ENV_VARIABLE}"
+        sdk_session_id: "${SDK_SESSION_ID}"
+        date_filters: '${DATE_FILTERS}'
+        hyperparameters: '${HYPERPARAMETERS}'
+        pipeline_id: "${PIPELINE_ID}"
+        build_id: "${BUILD_ID}"
+        pipeline_name: "${PIPELINE_NAME}"
+        pipeline_type: "${PIPELINE_TYPE}"
+        organization: "${ORGANIZATION}"
+        project: "${DEVOPS_PROJECT}"
+        solution_config : "SOLUTION_CONFIG_YAML"
+
+email_notifications:
+  on_start: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+  on_success: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+  on_failure: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+access_control_list:
+  - group_name: "${GROUP_NAME}"
+    permission_level: "CAN_MANAGE"

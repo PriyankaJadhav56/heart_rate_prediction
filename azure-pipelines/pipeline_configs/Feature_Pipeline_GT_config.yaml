@@ -1,0 +1,23 @@
+name: Feature_Pipeline_GT
+existing_cluster_id: "${CLUSTER_ID}"
+notebook_task:
+  notebook_path: "${NOTEBOOK_PATH}"
+  base_parameters:
+    env: "${ENV_VARIABLE}"
+    sdk_session_id: "${SDK_SESSION_ID}"
+    task: "DPD"
+    pipeline_id: "${PIPELINE_ID}"
+    build_id: "${BUILD_ID}"
+    pipeline_name: "${PIPELINE_NAME}"
+    pipeline_type: "${PIPELINE_TYPE}"
+    solution_config : "SOLUTION_CONFIG_YAML"
+schedule:
+  quartz_cron_expression: "0 0/20 * 1/1 * ? *"
+  timezone_id: "Asia/Calcutta"
+email_notifications:
+  on_start: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+  on_success: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+  on_failure: ["taufique.bux@tigeranalytics.com","revanth.konangi@tigeranalytics.com","krishnakumar.mar@tigeranalytics.com","himanshu.bajpai@tigeranalytics.com","vamsi.podipireddi@tigeranalytics.com"]
+access_control_list:
+  - group_name: "${GROUP_NAME}"
+    permission_level: "CAN_MANAGE"
