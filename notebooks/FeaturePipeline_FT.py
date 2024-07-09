@@ -199,24 +199,23 @@ if not source_1_df.first():
 
 # COMMAND ----------
 
-if task.lower() != "fe":
-    # Calling job run add for DPD job runs
-    mlclient.log(
-        operation_type="job_run_add", 
-        session_id = sdk_session_id, 
-        dbutils = dbutils, 
-        request_type = task, 
-        job_config = 
-        {
-            "table_name" : output_table_configs["output_1"]["table"],
-            "table_type" : "Source",
-            "batch_size" : batch_size
-        },
-        tracking_env = env,
-        tracking_url = tracking_url,
-        spark = spark,
-        verbose = True,
-        )
+
+mlclient.log(
+    operation_type="job_run_add", 
+    session_id = sdk_session_id, 
+    dbutils = dbutils, 
+    request_type = task, 
+    job_config = 
+    {
+        "table_name" : output_table_configs["output_1"]["table"],
+        "table_type" : "Source",
+        "batch_size" : batch_size
+    },
+    tracking_env = env,
+    tracking_url = tracking_url,
+    spark = spark,
+    verbose = True,
+    )
 
 # COMMAND ----------
 
@@ -242,6 +241,18 @@ df_main
 
 # COMMAND ----------
 
+df_main.isnull().sum()
+
+# COMMAND ----------
+
+df_main['avg_heart_rate'] = df_main['avg_heart_rate'].fillna(method='ffill')
+
+# COMMAND ----------
+
+df_main.isnull().sum()
+
+# COMMAND ----------
+
 # df_main['age'] = 2020 - df_main['year']
 # df_main.drop('year',axis=1,inplace = True)
 # df_main.drop(labels='name',axis= 1, inplace = True)
@@ -249,12 +260,12 @@ df_main
 
 # COMMAND ----------
 
-df_main['mean_WBC_RBC'] = df_main[['WBC', 'RBC']].mean(axis=1)
-df_main['std_WBC_RBC'] = df_main[['WBC', 'RBC']].std(axis=1)
+# df_main['mean_WBC_RBC'] = df_main[['WBC', 'RBC']].mean(axis=1)
+# df_main['std_WBC_RBC'] = df_main[['WBC', 'RBC']].std(axis=1)
 
 # COMMAND ----------
 
-df_main.drop(columns=['id'])
+# df_main.drop(columns=['id'])
 
 # COMMAND ----------
 
@@ -279,7 +290,7 @@ output_1_df = spark.createDataFrame(df_main)
 
 # COMMAND ----------
 
-output_1_df = output_1_df.drop('date','timestamp')
+# output_1_df = output_1_df.drop('date','timestamp')
 
 # COMMAND ----------
 
@@ -287,41 +298,41 @@ output_1_df.display()
 
 # COMMAND ----------
 
-def to_date_(col):
-    """
-    Checks col row-wise and returns first date format which returns non-null output for the respective column value
-    """
-    formats = (
-        "MM-dd-yyyy",
-        "dd-MM-yyyy",
-        "MM/dd/yyyy",
-        "yyyy-MM-dd",
-        "M/d/yyyy",
-        "M/dd/yyyy",
-        "MM/dd/yy",
-        "MM.dd.yyyy",
-        "dd.MM.yyyy",
-        "yyyy-MM-dd",
-        "yyyy-dd-MM",
-    )
-    return F.coalesce(*[F.to_date(col, f) for f in formats])
+# def to_date_(col):
+#     """
+#     Checks col row-wise and returns first date format which returns non-null output for the respective column value
+#     """
+#     formats = (
+#         "MM-dd-yyyy",
+#         "dd-MM-yyyy",
+#         "MM/dd/yyyy",
+#         "yyyy-MM-dd",
+#         "M/d/yyyy",
+#         "M/dd/yyyy",
+#         "MM/dd/yy",
+#         "MM.dd.yyyy",
+#         "dd.MM.yyyy",
+#         "yyyy-MM-dd",
+#         "yyyy-dd-MM",
+#     )
+#     return F.coalesce(*[F.to_date(col, f) for f in formats])
 
 # COMMAND ----------
 
-from datetime import datetime
-now = datetime.now()
-date = now.strftime("%m-%d-%Y")
-output_1_df = output_1_df.withColumn(
-    "timestamp",
-    F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
-)
-output_1_df = output_1_df.withColumn("date", F.lit(date))
-output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
+# from datetime import datetime
+# now = datetime.now()
+# date = now.strftime("%m-%d-%Y")
+# output_1_df = output_1_df.withColumn(
+#     "timestamp",
+#     F.expr("reflect('java.lang.System', 'currentTimeMillis')").cast("long"),
+# )
+# output_1_df = output_1_df.withColumn("date", F.lit(date))
+# output_1_df = output_1_df.withColumn("date", to_date_(F.col("date")))
 
-# ADD A MONOTONICALLY INREASING COLUMN
-if "id" not in output_1_df.columns : 
-  window = Window.orderBy(F.monotonically_increasing_id())
-  output_1_df = output_1_df.withColumn("id", F.row_number().over(window))
+# # ADD A MONOTONICALLY INREASING COLUMN
+# if "id" not in output_1_df.columns : 
+#   window = Window.orderBy(F.monotonically_increasing_id())
+#   output_1_df = output_1_df.withColumn("id", F.row_number().over(window))
 
 # COMMAND ----------
 

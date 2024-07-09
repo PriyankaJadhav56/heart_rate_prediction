@@ -200,25 +200,23 @@ if not source_1_df.first():
 
 # COMMAND ----------
 
-from MLCORE_SDK import mlclient
-if task.lower() != "fe":
-    # Calling job run add for DPD job runs
-    mlclient.log(
-        operation_type="job_run_add", 
-        session_id = sdk_session_id, 
-        dbutils = dbutils, 
-        request_type = task, 
-        job_config = 
-        {
-            "table_name" : output_table_configs["output_1"]["table"],
-            "table_type" : "Ground_Truth",
-            "batch_size" : batch_size
-        },
-        spark = spark,
-        tracking_env = env,
-        tracking_url = tracking_url,
-        verbose = True,
-        )
+
+mlclient.log(
+    operation_type="job_run_add", 
+    session_id = sdk_session_id, 
+    dbutils = dbutils, 
+    request_type = task, 
+    job_config = 
+    {
+        "table_name" : output_table_configs["output_1"]["table"],
+        "table_type" : "Ground_Truth",
+        "batch_size" : batch_size
+    },
+    spark = spark,
+    tracking_env = env,
+    tracking_url = tracking_url,
+    verbose = True,
+    )
 
 # COMMAND ----------
 

@@ -1,6 +1,6 @@
 general_configs : 
   sdk_session_id: 
-    dev: 10ca7886d68e49cbb2d9307e9d2d939a
+    dev: d51308706db5453bb7aa120966f9c36a
     uat: 16ba37d0994549a7a3fb1df72563e37c
     prod: 64ec92d6117247877965d152
   tracking_env: dev
@@ -12,14 +12,14 @@ data_engineering_ft:
     input_tables :
       source_1 : 
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_2
-        table : raw_anemia_c_uc_feature_2
+        schema : synth_heart_rate
+        table : heart_rates_conf
         primary_keys: index
     output_tables :
       output_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_feature_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_ft
         primary_keys: index
   storage_configs :
     cloud_provider : databricks_uc
@@ -37,14 +37,14 @@ data_engineering_gt:
     input_tables :
       source_1 : 
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_2
-        table : raw_anemia_c_uc_gt_2
+        schema : synth_heart_rate
+        table : heart_rates_conf
         primary_keys: index
     output_tables :
       output_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_gt_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_gt
         primary_keys: index
   storage_configs :
     cloud_provider : databricks_uc
@@ -62,14 +62,14 @@ feature_pipelines_ft:
     input_tables :
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_feature_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_ft
         primary_keys: index
     output_tables :
         output_1 :
           catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: transformed_anemia_c_uc_feature_uc_0207_v1
+          schema : synth_heart_rate
+          table: heart_rates_conf_featur_pipe_ft
           primary_keys: index
   storage_configs :
     cloud_provider : databricks_uc
@@ -85,14 +85,14 @@ feature_pipelines_gt:
     input_tables : 
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_gt_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_gt
         primary_keys: index
     output_tables : 
         output_1 :
           catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: transformed_anemia_c_uc_gt_uc_0207_v1
+          schema : synth_heart_rate
+          table: heart_rates_conf_featur_pipe_gt
           primary_keys: index  
   storage_configs :
     cloud_provider : databricks_uc
@@ -108,19 +108,19 @@ train:
     input_tables : 
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: transformed_anemia_c_uc_feature_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_ft
         primary_keys: index
       input_2 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: transformed_anemia_c_uc_gt_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_gt
         primary_keys: index
     output_tables : 
         output_1 :
           catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: trainoutput_anemia_c_uc_0207_v1
+          schema : synth_heart_rate
+          table: trainoutput_heart_rates
           primary_keys: index
   model_configs :
     registry_platform: databricks
@@ -128,9 +128,9 @@ train:
     unity_catalog : "yes"
     model_registry_params :
       catalog_name: mlcore_dev
-      schema_name: anemia_c_uc_uc_db_0207_v1
+      schema_name: synth_heart_rate
     model_params:      
-      model_name: anemia_c_az_mlflow_0207_v1
+      model_name: synth_heart_rate_mlflow
   storage_configs :
     cloud_provider : databricks_uc
     params:
@@ -140,26 +140,14 @@ train:
       volume_name : mlcore_volume
   test_size : 0.2
   feature_columns:
-    - WBC
-    - LYMp
-    - NEUTp
-    - LYMn
-    - NEUTn
-    - RBC
-    - HGB
-    - HCT
-    - MCV
-    - MCH
-    - MCHC
-    - PLT
-    - PDW
-    - PCT
-    - mean_WBC_RBC
-    - std_WBC_RBC
-    - id
+    - epoch
+    - name
+    - age_group
+    - gender
+    - lifestyle
   date_column: 'date_time'
   target_columns:
-    - Diagnosis
+    - avg_heart_rate
   horizon: 7
   frequency: 'D'
   is_scheduled: false
@@ -169,20 +157,20 @@ data_prep_deployment_ft:
     input_tables :
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_feature_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_ft
         primary_keys: index
     output_tables :
         output_1 :
           catalog_name : mlcore_dev
           schema : anemia_c_uc_uc_db_0207_v1
-          table: dpd_anemia_c_uc_feature_uc_0207_v1
+          table: heart_rates_conf_dpd_ft
           primary_keys: index  
-        output_2 :
-          catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: dpd_feature_table_task_log_anemia_c_uc_0207_v1
-          primary_keys: index
+        # output_2 :
+        #   catalog_name : mlcore_dev
+        #   schema : anemia_c_uc_uc_db_0207_v1
+        #   table: dpd_feature_table_task_log_anemia_c_uc_0207_v1
+        #   primary_keys: index
   storage_configs :
     cloud_provider : databricks_uc
     params:
@@ -199,20 +187,20 @@ data_prep_deployment_gt:
     input_tables : 
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: anemia_c_uc_gt_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_gt
         primary_keys: index
     output_tables : 
         output_1 :
           catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: dpd_anemia_c_uc_gt_uc_0207_v1
+          schema : synth_heart_rate
+          table: heart_rates_conf_dpd_gt
           primary_keys: index  
-        output_2 :
-          catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: dpd_ground_truth_table_task_log_anemia_c_uc_0207_v1
-          primary_keys: index
+        # output_2 :
+        #   catalog_name : mlcore_dev
+        #   schema : anemia_c_uc_uc_db_0207_v1
+        #   table: dpd_ground_truth_table_task_log_anemia_c_uc_0207_v1
+        #   primary_keys: index
   storage_configs :
     cloud_provider : databricks_uc
     params:
@@ -229,25 +217,25 @@ inference:
     input_tables : 
       input_1 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: dpd_anemia_c_uc_feature_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_featur_pipe_ft
         primary_keys: index
       input_2 :
         catalog_name : mlcore_dev
-        schema : anemia_c_uc_uc_db_0207_v1
-        table: dpd_anemia_c_uc_gt_uc_0207_v1
+        schema : synth_heart_rate
+        table: heart_rates_conf_featur_pipe_gt
         primary_keys: index
     output_tables : 
         output_1 :
           catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: inference_anemia_c_0207_v1
+          schema : synth_heart_rate
+          table: heart_rates_conf_inference
           primary_keys: index
-        output_2 :
-          catalog_name : mlcore_dev
-          schema : anemia_c_uc_uc_db_0207_v1
-          table: inference_task_log_anemia_c_uc_2806
-          primary_keys: index
+        # output_2 :
+        #   catalog_name : mlcore_dev
+        #   schema : synth_heart_rate
+        #   table: inference_task_log_anemia_c_uc_2806
+        #   primary_keys: index
   model_configs :
     use_latest_version: true
   is_scheduled: true

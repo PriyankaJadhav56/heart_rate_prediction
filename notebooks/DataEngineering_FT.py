@@ -4,8 +4,13 @@
 
 # COMMAND ----------
 
+# dbutils.library.restartPython()
+
+# COMMAND ----------
+
 from sparkmeasure import StageMetrics
 from sparkmeasure import TaskMetrics
+
 taskmetrics = TaskMetrics(spark)
 stagemetrics = StageMetrics(spark)
 
@@ -113,6 +118,10 @@ mlclient.log(
 # COMMAND ----------
 
 output_1_df = source_1_df.drop('date','id','timestamp')
+
+# COMMAND ----------
+
+output_1_df = output_1_df.drop('name', 'age_group', 'gender', 'lifestyle')
 
 # COMMAND ----------
 

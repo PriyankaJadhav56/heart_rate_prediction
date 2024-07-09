@@ -115,6 +115,10 @@ output_1_df = source_1_df.drop('date','id','timestamp')
 
 # COMMAND ----------
 
+output_1_df = output_1_df.select('index','avg_heart_rate')
+
+# COMMAND ----------
+
 output_1_df.display()
 
 # COMMAND ----------
