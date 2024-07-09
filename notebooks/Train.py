@@ -130,10 +130,6 @@ output_table_paths = get_name_space(output_table_configs)
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 ft_data = spark.sql(f"SELECT * FROM {input_table_paths['input_1']}")
 gt_data = spark.sql(f"SELECT * FROM {input_table_paths['input_2']}")
 
@@ -219,21 +215,39 @@ final_df_pandas.display()
 
 # DBTITLE 1,Spliting the Final df to test and train dfs
 # Split the Data to Train and Test
-X_train, X_test, y_train, y_test = train_test_split(final_df_pandas[feature_columns], final_df_pandas[target_columns], test_size=test_size, random_state = 0)
+# X_train, X_test, y_train, y_test = train_test_split(final_df_pandas[feature_columns], final_df_pandas[target_columns], test_size=test_size, random_state = 0)
+
+
+# Split the Data to Train and Test
+traindf = final_df_pandas.iloc[int(final_df_pandas.shape[0] * test_size):]
+testdf = final_df_pandas.iloc[:int(final_df_pandas.shape[0] * test_size)]
+lr = Prophet()
+lr.fit(traindf)
+X_train= traindf["epoc"]
+y_train= traindf["avg_heart_rate"]
+X_test= testdf["epoc"]
+y_test= testdf["avg_heart_rate"]
+
+# #Fetching train and test predictions from model
+# train_pred = model.predict(traindf)
+# test_pred = model.predict(testdf)
 
 # COMMAND ----------
 
-# Build a Scikit learn pipeline
-pipe = Pipeline([
-    ('regressor',LinearRegression())
-])
+# # Build a Scikit learn pipeline
+# pipe = Pipeline([
+#     ('regressor',LinearRegression())
+# ])
 X_train_np = X_train.to_numpy()
 X_test_np = X_test.to_numpy()
+
+# model = Prophet()
+# model.fit(traindf)
 
 # COMMAND ----------
 
 # Fit the pipeline
-lr = pipe.fit(X_train_np, y_train)
+# lr = pipe.fit(X_train_np, y_train)
 
 # COMMAND ----------
 
@@ -429,6 +443,34 @@ train_data_date_dict = {
 
 model_name = f"{model_configs.get('model_registry_params').get('catalog_name')}.{model_configs.get('model_registry_params').get('schema_name')}.{model_configs.get('model_params').get('model_name')}"
 model_name
+
+# COMMAND ----------
+
+flag = True
+if(flag):
+    flag = False
+    mlclient.log(
+        operation_type="job_run_add", 
+        session_id = sdk_session_id, 
+        dbutils = dbutils, 
+        request_type = "train", 
+        job_config = 
+        {
+            "table_name" : output_table_configs["output_1"]["table"],
+            "model_name" : model_name,
+            "feature_table_path" : feature_table_path,
+            "ground_truth_table_path" : gt_table_path,
+            "feature_columns" : feature_columns,
+            "target_columns" : target_columns,
+            "model" : Prophet,
+            "model_runtime_env" : "python",
+            "reuse_train_session" : False
+        },
+        tracking_env = env,
+        tracking_url = tracking_url,
+        spark = spark,
+        verbose = True,
+        )
 
 # COMMAND ----------
 
