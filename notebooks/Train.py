@@ -728,6 +728,7 @@ else:
 
 print(feature_table_path, gt_table_path)
 
+
 # COMMAND ----------
 
 stagemetrics.end()
