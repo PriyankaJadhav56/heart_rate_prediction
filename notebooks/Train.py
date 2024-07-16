@@ -551,14 +551,6 @@ for segment in segments:
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
-
-
-# COMMAND ----------
-
 # DBTITLE 1,Spliting the Final df to test and train dfs
 # Split the Data to Train and Test
 # X_train, X_test, y_train, y_test = train_test_split(final_df_pandas[feature_columns], final_df_pandas[target_columns], test_size=test_size, random_state = 0)
