@@ -559,10 +559,6 @@ for segment in segments:
 
 # COMMAND ----------
 
-xgb_r
-
-# COMMAND ----------
-
 # DBTITLE 1,Spliting the Final df to test and train dfs
 # Split the Data to Train and Test
 # X_train, X_test, y_train, y_test = train_test_split(final_df_pandas[feature_columns], final_df_pandas[target_columns], test_size=test_size, random_state = 0)
@@ -692,55 +688,32 @@ X_test_np = X_test.to_numpy()
 
 # COMMAND ----------
 
-cat = 'mlcore_dev'
-mv = 'synth_heart_rate'
-t = 'trainoutput_heart_rates_prophet_test'
+# if input_table_configs["input_1"]["catalog_name"]:
+#     feature_table_path = input_table_paths["input_1"]
+# else:
+#     feature_table_path = spark.sql(f"desc formatted {input_table_paths['input_1']}").filter(F.col("col_name") == "Location").select("data_type").collect()[0][0]
 
-# COMMAND ----------
-
-spark.catalog.tableExists(f"{cat}.{mv}.{t}")
-
-# COMMAND ----------
-
-if spark.catalog.tableExists(f"{cat}.{mv}.{t}"):
-    print("yes")
-    train_output_df_xg.write.mode("append").saveAsTable(f"{cat}.{mv}.{t}")
-else:
-    print("NO")
-    train_output_df_xg.write.mode("overwrite").saveAsTable(f"{cat}.{mv}.{t}")
-
-# COMMAND ----------
-
-f"{cat}.{mv}"
-
-# COMMAND ----------
-
-if input_table_configs["input_1"]["catalog_name"]:
-    feature_table_path = input_table_paths["input_1"]
-else:
-    feature_table_path = spark.sql(f"desc formatted {input_table_paths['input_1']}").filter(F.col("col_name") == "Location").select("data_type").collect()[0][0]
-
-if input_table_configs["input_2"]["catalog_name"]:
-    gt_table_path = input_table_paths["input_2"]
-else:
-    gt_table_path = spark.sql(f"desc formatted {input_table_paths['input_2']}").filter(F.col("col_name") == "Location").select("data_type").collect()[0][0]
+# if input_table_configs["input_2"]["catalog_name"]:
+#     gt_table_path = input_table_paths["input_2"]
+# else:
+#     gt_table_path = spark.sql(f"desc formatted {input_table_paths['input_2']}").filter(F.col("col_name") == "Location").select("data_type").collect()[0][0]
 
 
-print(feature_table_path, gt_table_path)
+# print(feature_table_path, gt_table_path)
 
 
 # COMMAND ----------
 
-stagemetrics.end()
-taskmetrics.end()
+# stagemetrics.end()
+# taskmetrics.end()
 
-stage_Df = stagemetrics.create_stagemetrics_DF("PerfStageMetrics")
-task_Df = taskmetrics.create_taskmetrics_DF("PerfTaskMetrics")
+# stage_Df = stagemetrics.create_stagemetrics_DF("PerfStageMetrics")
+# task_Df = taskmetrics.create_taskmetrics_DF("PerfTaskMetrics")
 
-compute_metrics = stagemetrics.aggregate_stagemetrics_DF().select("executorCpuTime", "peakExecutionMemory","memoryBytesSpilled","diskBytesSpilled").collect()[0].asDict()
+# compute_metrics = stagemetrics.aggregate_stagemetrics_DF().select("executorCpuTime", "peakExecutionMemory","memoryBytesSpilled","diskBytesSpilled").collect()[0].asDict()
 
-compute_metrics['executorCpuTime'] = compute_metrics['executorCpuTime']/1000
-compute_metrics['peakExecutionMemory'] = float(compute_metrics['peakExecutionMemory']) /(1024*1024)
+# compute_metrics['executorCpuTime'] = compute_metrics['executorCpuTime']/1000
+# compute_metrics['peakExecutionMemory'] = float(compute_metrics['peakExecutionMemory']) /(1024*1024)
 
 # COMMAND ----------
 
@@ -750,88 +723,88 @@ compute_metrics['peakExecutionMemory'] = float(compute_metrics['peakExecutionMem
 
 # COMMAND ----------
 
-from MLCORE_SDK import mlclient
+# from MLCORE_SDK import mlclient
 
 # COMMAND ----------
 
-train_data_date_dict = {
-    "feature_table" : {
-        "ft_start_date" : ft_data.select(F.min("timestamp")).collect()[0][0],
-        "ft_end_date" : ft_data.select(F.max("timestamp")).collect()[0][0]
-    },
-    "gt_table" : {
-        "gt_start_date" : gt_data.select(F.min("timestamp")).collect()[0][0],
-        "gt_end_date" : gt_data.select(F.max("timestamp")).collect()[0][0]        
-    }
-}
+# train_data_date_dict = {
+#     "feature_table" : {
+#         "ft_start_date" : ft_data.select(F.min("timestamp")).collect()[0][0],
+#         "ft_end_date" : ft_data.select(F.max("timestamp")).collect()[0][0]
+#     },
+#     "gt_table" : {
+#         "gt_start_date" : gt_data.select(F.min("timestamp")).collect()[0][0],
+#         "gt_end_date" : gt_data.select(F.max("timestamp")).collect()[0][0]        
+#     }
+# }
 
 # COMMAND ----------
 
-model_name = f"{model_configs.get('model_registry_params').get('catalog_name')}.{model_configs.get('model_registry_params').get('schema_name')}.{model_configs.get('model_params').get('model_name')}"
-model_name
+# model_name = f"{model_configs.get('model_registry_params').get('catalog_name')}.{model_configs.get('model_registry_params').get('schema_name')}.{model_configs.get('model_params').get('model_name')}"
+# model_name
 
 # COMMAND ----------
 
-flag = True
-if(flag):
-    flag = False
-    mlclient.log(
-        operation_type="job_run_add", 
-        session_id = sdk_session_id, 
-        dbutils = dbutils, 
-        request_type = "train", 
-        job_config = 
-        {
-            "table_name" : output_table_configs["output_1"]["table"],
-            "model_name" : model_name,
-            "feature_table_path" : feature_table_path,
-            "ground_truth_table_path" : gt_table_path,
-            "feature_columns" : feature_columns,
-            "target_columns" : target_columns,
-            "model" : Prophet,
-            "model_runtime_env" : "python",
-            "reuse_train_session" : False
-        },
-        tracking_env = env,
-        tracking_url = tracking_url,
-        spark = spark,
-        verbose = True,
-        )
+# flag = True
+# if(flag):
+#     flag = False
+#     mlclient.log(
+#         operation_type="job_run_add", 
+#         session_id = sdk_session_id, 
+#         dbutils = dbutils, 
+#         request_type = "train", 
+#         job_config = 
+#         {
+#             "table_name" : output_table_configs["output_1"]["table"],
+#             "model_name" : model_name,
+#             "feature_table_path" : feature_table_path,
+#             "ground_truth_table_path" : gt_table_path,
+#             "feature_columns" : feature_columns,
+#             "target_columns" : target_columns,
+#             "model" : Prophet,
+#             "model_runtime_env" : "python",
+#             "reuse_train_session" : False
+#         },
+#         tracking_env = env,
+#         tracking_url = tracking_url,
+#         spark = spark,
+#         verbose = True,
+#         )
 
 # COMMAND ----------
 
 # DBTITLE 1,Registering the model in MLCore
-mlclient.log(operation_type = "register_model",
-    sdk_session_id = sdk_session_id,
-    dbutils = dbutils,
-    spark = spark,
-    model = lr,
-    model_name = model_name, #model_configs["model_params"]["model_name"],
-    model_runtime_env = "python",
-    train_metrics = train_metrics,
-    test_metrics = test_metrics,
-    feature_table_path = feature_table_path,
-    ground_truth_table_path = gt_table_path,
-    train_output_path = output_1_table_path,
-    train_output_rows = train_output_df.count(),
-    train_output_cols = train_output_df.columns,
-    table_schema=train_output_df.schema,
-    column_datatype = train_output_df.dtypes,
-    feature_columns = feature_columns,
-    target_columns = target_columns,
-    table_type="unitycatalog" if output_table_configs["output_1"]["catalog_name"] else "internal",
-    train_data_date_dict = train_data_date_dict,
-    compute_usage_metrics = compute_metrics,
-    taskmetrics = taskmetrics,
-    stagemetrics = stagemetrics,
-    tracking_env = env,
-    horizon=horizon,
-    frequency=frequency,
-    example_input = first_row_dict,
-    # register_in_feature_store=True,
-    model_configs = model_configs,
-    tracking_url = tracking_url,
-    verbose = True)
+# mlclient.log(operation_type = "register_model",
+#     sdk_session_id = sdk_session_id,
+#     dbutils = dbutils,
+#     spark = spark,
+#     model = lr,
+#     model_name = model_name, #model_configs["model_params"]["model_name"],
+#     model_runtime_env = "python",
+#     train_metrics = train_metrics,
+#     test_metrics = test_metrics,
+#     feature_table_path = feature_table_path,
+#     ground_truth_table_path = gt_table_path,
+#     train_output_path = output_1_table_path,
+#     train_output_rows = train_output_df.count(),
+#     train_output_cols = train_output_df.columns,
+#     table_schema=train_output_df.schema,
+#     column_datatype = train_output_df.dtypes,
+#     feature_columns = feature_columns,
+#     target_columns = target_columns,
+#     table_type="unitycatalog" if output_table_configs["output_1"]["catalog_name"] else "internal",
+#     train_data_date_dict = train_data_date_dict,
+#     compute_usage_metrics = compute_metrics,
+#     taskmetrics = taskmetrics,
+#     stagemetrics = stagemetrics,
+#     tracking_env = env,
+#     horizon=horizon,
+#     frequency=frequency,
+#     example_input = first_row_dict,
+#     # register_in_feature_store=True,
+#     model_configs = model_configs,
+#     tracking_url = tracking_url,
+#     verbose = True)
 
 # COMMAND ----------
 
