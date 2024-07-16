@@ -120,7 +120,12 @@ train:
         output_1 :
           catalog_name : mlcore_dev
           schema : synth_heart_rate
-          table: trainoutput_heart_rates
+          table: trainoutput_heart_rates_prophet
+          primary_keys: index
+        output_2 :
+          catalog_name : mlcore_dev
+          schema : synth_heart_rate
+          table: trainoutput_heart_rates_xgb
           primary_keys: index
   model_configs :
     registry_platform: databricks
